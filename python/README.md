@@ -1,6 +1,11 @@
 # Graph visualisation with TypeDB
 This is a utility library to help construct graphs & other structures from TypeQL query results.
 
+## Install from pip
+`typedb-graph-utils` is available on [pip](https://pypi.org/project/typedb-graph-utils/).
+```shell
+pip install typedb-graph-utils
+```
 
 ## Install from source:
 1. Ensure you have build
