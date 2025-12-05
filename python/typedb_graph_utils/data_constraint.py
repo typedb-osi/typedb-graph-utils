@@ -58,7 +58,7 @@ class NamedRoleVertex(DataVertex):
 
 
 class FunctionCallVertex(DataVertex):
-    def __init__(self, name: str, assigned: List[Concept], arguments: List[Concept]):
+    def __init__(self, name: str, assigned: List[ConceptVertex], arguments: List[ConceptVertex]):
         self.name = name
         self.assigned = tuple(assigned)
         self.arguments = tuple(arguments)
@@ -81,7 +81,7 @@ class FunctionCallVertex(DataVertex):
 
 
 class ExpressionVertex(DataVertex):
-    def __init__(self, text: str, assigned: Concept, arguments: List[Concept]):
+    def __init__(self, text: str, assigned: ConceptVertex, arguments: List[ConceptVertex]):
         self.text = text
         self.arguments = tuple(arguments)
         self.assigned = assigned
@@ -329,7 +329,7 @@ class DataConstraint(ABC):
 
 
 class Isa(DataConstraint):
-    def __init__(self, constraint: Constraint, answer_index: Optional[int], instance: Concept, type_: Concept,
+    def __init__(self, constraint: Constraint, answer_index: Optional[int], instance: ConceptVertex, type_: ConceptVertex,
                  exactness):
         super().__init__(constraint, answer_index)
         self._instance = instance
@@ -342,10 +342,10 @@ class Isa(DataConstraint):
     def as_isa(self):
         return self
 
-    def instance(self) -> Concept:
+    def instance(self) -> ConceptVertex:
         return self._instance
 
-    def type(self) -> Concept:
+    def type(self) -> ConceptVertex:
         return self._type
 
     def exactness(self) -> "ConstraintExactness":
@@ -353,7 +353,7 @@ class Isa(DataConstraint):
 
 
 class Has(DataConstraint):
-    def __init__(self, constraint: Constraint, answer_index: Optional[int], owner: Concept, attribute: Concept,
+    def __init__(self, constraint: Constraint, answer_index: Optional[int], owner: ConceptVertex, attribute: ConceptVertex,
                  exactness):
         super().__init__(constraint, answer_index)
         self._owner = owner
@@ -366,10 +366,10 @@ class Has(DataConstraint):
     def as_has(self):
         return self
 
-    def owner(self) -> Concept:
+    def owner(self) -> ConceptVertex:
         return self._owner
 
-    def attribute(self) -> Concept:
+    def attribute(self) -> ConceptVertex:
         return self._attribute
 
     def exactness(self) -> "ConstraintExactness":
@@ -377,8 +377,8 @@ class Has(DataConstraint):
 
 
 class Links(DataConstraint):
-    def __init__(self, constraint: Constraint, answer_index: Optional[int], relation: Concept, player: Concept,
-                 role: Concept, exactness):
+    def __init__(self, constraint: Constraint, answer_index: Optional[int], relation: ConceptVertex, player: ConceptVertex,
+                 role: DataVertex, exactness):
         super().__init__(constraint, answer_index)
         self._relation = relation
         self._player = player
@@ -391,13 +391,13 @@ class Links(DataConstraint):
     def as_links(self):
         return self
 
-    def relation(self) -> Concept:
+    def relation(self) -> ConceptVertex:
         return self._relation
 
-    def player(self) -> Concept:
+    def player(self) -> ConceptVertex:
         return self._player
 
-    def role(self) -> Concept:
+    def role(self) -> DataVertex:
         return self._role
 
     def exactness(self) -> "ConstraintExactness":
@@ -405,7 +405,7 @@ class Links(DataConstraint):
 
 
 class Sub(DataConstraint):
-    def __init__(self, constraint: Constraint, answer_index: Optional[int], subtype: Concept, supertype: Concept,
+    def __init__(self, constraint: Constraint, answer_index: Optional[int], subtype: ConceptVertex, supertype: ConceptVertex,
                  exactness):
         super().__init__(constraint, answer_index)
         self._subtype = subtype
@@ -418,10 +418,10 @@ class Sub(DataConstraint):
     def as_sub(self):
         return self
 
-    def subtype(self) -> Concept:
+    def subtype(self) -> ConceptVertex:
         return self._subtype
 
-    def supertype(self) -> Concept:
+    def supertype(self) -> ConceptVertex:
         return self._supertype
 
     def exactness(self) -> "ConstraintExactness":
@@ -429,7 +429,7 @@ class Sub(DataConstraint):
 
 
 class Owns(DataConstraint):
-    def __init__(self, constraint: Constraint, answer_index: Optional[int], owner: Concept, attribute: Concept,
+    def __init__(self, constraint: Constraint, answer_index: Optional[int], owner: ConceptVertex, attribute: ConceptVertex,
                  exactness):
         super().__init__(constraint, answer_index)
         self._owner = owner
@@ -442,10 +442,10 @@ class Owns(DataConstraint):
     def as_owns(self):
         return self
 
-    def owner(self) -> Concept:
+    def owner(self) -> ConceptVertex:
         return self._owner
 
-    def attribute(self) -> Concept:
+    def attribute(self) -> ConceptVertex:
         return self._attribute
 
     def exactness(self) -> "ConstraintExactness":
@@ -453,7 +453,7 @@ class Owns(DataConstraint):
 
 
 class Relates(DataConstraint):
-    def __init__(self, constraint: Constraint, answer_index: Optional[int], relation: Concept, role: Concept,
+    def __init__(self, constraint: Constraint, answer_index: Optional[int], relation: ConceptVertex, role: DataVertex,
                  exactness):
         super().__init__(constraint, answer_index)
         self._relation = relation
@@ -466,10 +466,10 @@ class Relates(DataConstraint):
     def as_relates(self):
         return self
 
-    def relation(self) -> Concept:
+    def relation(self) -> ConceptVertex:
         return self._relation
 
-    def role(self) -> Concept:
+    def role(self) -> DataVertex:
         return self._role
 
     def exactness(self) -> "ConstraintExactness":
@@ -477,7 +477,7 @@ class Relates(DataConstraint):
 
 
 class Plays(DataConstraint):
-    def __init__(self, constraint: Constraint, answer_index: Optional[int], player: Concept, role: Concept, exactness):
+    def __init__(self, constraint: Constraint, answer_index: Optional[int], player: ConceptVertex, role: ConceptVertex, exactness):
         super().__init__(constraint, answer_index)
         self._player = player
         self._role = role
@@ -489,10 +489,10 @@ class Plays(DataConstraint):
     def as_plays(self):
         return self
 
-    def player(self) -> Concept:
+    def player(self) -> ConceptVertex:
         return self._player
 
-    def role(self) -> Concept:
+    def role(self) -> ConceptVertex:
         return self._role
 
     def exactness(self) -> "ConstraintExactness":
@@ -501,7 +501,7 @@ class Plays(DataConstraint):
 
 class FunctionCall(DataConstraint):
     def __init__(self, constraint: Constraint, answer_index: Optional[int], call_vertex: FunctionCallVertex,
-                 arguments: List[Concept], assigned: List[Concept]):
+                 arguments: List[ConceptVertex], assigned: List[ConceptVertex]):
         super().__init__(constraint, answer_index)
         self._call_vertex = call_vertex
         self._arguments = arguments
@@ -516,16 +516,16 @@ class FunctionCall(DataConstraint):
     def call_vertex(self) -> str:
         return self._call_vertex
 
-    def arguments(self) -> List[Concept]:
+    def arguments(self) -> List[ConceptVertex]:
         return self._arguments
 
-    def assigned(self) -> List[Concept]:
+    def assigned(self) -> List[ConceptVertex]:
         return self._assigned
 
 
 class Expression(DataConstraint):
     def __init__(self, constraint: Constraint, answer_index: Optional[int], expr: ExpressionVertex,
-                 arguments: List[Concept], assigned: Concept):
+                 arguments: List[ConceptVertex], assigned: ConceptVertex):
         super().__init__(constraint, answer_index)
         self._expr = expr
         self._arguments = arguments
@@ -540,15 +540,15 @@ class Expression(DataConstraint):
     def expression_vertex(self) -> ExpressionVertex:
         return self._expr
 
-    def arguments(self) -> List[Concept]:
+    def arguments(self) -> List[ConceptVertex]:
         return self._arguments
 
-    def assigned(self) -> Concept:
+    def assigned(self) -> ConceptVertex:
         return self._assigned
 
 
 class Is(DataConstraint):
-    def __init__(self, constraint: Constraint, answer_index: Optional[int], lhs: Concept, rhs: Concept):
+    def __init__(self, constraint: Constraint, answer_index: Optional[int], lhs: ConceptVertex, rhs: ConceptVertex):
         super().__init__(constraint, answer_index)
         self._lhs = lhs
         self._rhs = rhs
@@ -559,15 +559,15 @@ class Is(DataConstraint):
     def as_is(self):
         return self
 
-    def lhs(self) -> Concept:
+    def lhs(self) -> ConceptVertex:
         return self._lhs
 
-    def rhs(self) -> Concept:
+    def rhs(self) -> ConceptVertex:
         return self._rhs
 
 
 class Iid(DataConstraint):
-    def __init__(self, constraint: Constraint, answer_index: Optional[int], variable: Concept, iid_value: str):
+    def __init__(self, constraint: Constraint, answer_index: Optional[int], variable: ConceptVertex, iid_value: str):
         super().__init__(constraint, answer_index)
         self._variable = variable
         self._iid = iid_value
@@ -578,7 +578,7 @@ class Iid(DataConstraint):
     def as_iid(self):
         return self
 
-    def variable(self) -> Concept:
+    def variable(self) -> ConceptVertex:
         return self._variable
 
     def iid(self) -> str:
@@ -586,7 +586,7 @@ class Iid(DataConstraint):
 
 
 class Comparison(DataConstraint):
-    def __init__(self, constraint: Constraint, answer_index: Optional[int], lhs: Concept, rhs: Concept, comparator):
+    def __init__(self, constraint: Constraint, answer_index: Optional[int], lhs: ConceptVertex, rhs: ConceptVertex, comparator):
         super().__init__(constraint, answer_index)
         self._lhs = lhs
         self._rhs = rhs
@@ -598,10 +598,10 @@ class Comparison(DataConstraint):
     def as_comparison(self):
         return self
 
-    def lhs(self) -> Concept:
+    def lhs(self) -> ConceptVertex:
         return self._lhs
 
-    def rhs(self) -> Concept:
+    def rhs(self) -> ConceptVertex:
         return self._rhs
 
     def comparator(self) -> "Comparator":
@@ -609,7 +609,7 @@ class Comparison(DataConstraint):
 
 
 class Kind(DataConstraint):
-    def __init__(self, constraint: Constraint, answer_index: Optional[int], kind_enum, type_: Concept):
+    def __init__(self, constraint: Constraint, answer_index: Optional[int], kind_enum, type_: ConceptVertex):
         super().__init__(constraint, answer_index)
         self._kind = kind_enum
         self._type = type_
@@ -623,12 +623,12 @@ class Kind(DataConstraint):
     def kind(self) -> "typedb.common.enums.Kind":
         return self._kind
 
-    def type(self) -> Concept:
+    def type(self) -> ConceptVertex:
         return self._type
 
 
 class Label(DataConstraint):
-    def __init__(self, constraint: Constraint, answer_index: Optional[int], variable: Concept, label_value: str):
+    def __init__(self, constraint: Constraint, answer_index: Optional[int], variable: ConceptVertex, label_value: str):
         super().__init__(constraint, answer_index)
         self._variable = variable
         self._label = label_value
@@ -639,7 +639,7 @@ class Label(DataConstraint):
     def as_label(self):
         return self
 
-    def variable(self) -> Concept:
+    def variable(self) -> ConceptVertex:
         return self._variable
 
     def label(self) -> str:
@@ -647,7 +647,7 @@ class Label(DataConstraint):
 
 
 class Value(DataConstraint):
-    def __init__(self, constraint: Constraint, answer_index: Optional[int], attribute_type: Concept, value_type: str):
+    def __init__(self, constraint: Constraint, answer_index: Optional[int], attribute_type: ConceptVertex, value_type: str):
         super().__init__(constraint, answer_index)
         self._attribute_type = attribute_type
         self._value_type = value_type
@@ -658,7 +658,7 @@ class Value(DataConstraint):
     def as_value(self):
         return self
 
-    def attribute_type(self) -> Concept:
+    def attribute_type(self) -> ConceptVertex:
         return self._attribute_type
 
     def value_type(self) -> str:

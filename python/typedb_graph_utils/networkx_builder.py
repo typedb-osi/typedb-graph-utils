@@ -41,7 +41,7 @@ class NetworkXBuilder(TypeDBAnswerConverter[MultiDiGraph]):
         if links.relation() is None or links.player() is None:
             return
         if isinstance(links.role(), ConceptVertex):
-            role_label = links.role().get_label()
+            role_label = links.role().concept.get_label()
         elif isinstance(links.role(), NamedRoleVertex):
             role_label = links.role().name()
         else:
