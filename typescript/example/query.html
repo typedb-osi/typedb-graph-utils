@@ -153,6 +153,8 @@
                         const multiGraph = new TypeDBGraph.MultiGraph();
                         const converter = new TypeDBGraph.SigmaConverter(multiGraph);
                         TypeDBGraph.convertLogicalGraphWith(dataGraph, converter);
+                        const settings = TypeDBGraph.forceAtlas2.inferSettings(multiGraph);
+                        TypeDBGraph.forceAtlas2.assign(multiGraph, { iterations: 50, settings });
                         switchTab('graph');
                         const container = document.getElementById("sigma-container");
                         sigmaInstance = new TypeDBGraph.Sigma(multiGraph, container, {
