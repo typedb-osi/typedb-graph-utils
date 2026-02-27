@@ -1,15 +1,21 @@
-import { ConstraintVertexAny } from "@typedb/driver-http";
+import {Concept, ConstraintVertexAny} from "@typedb/driver-http";
 import { MultiGraph } from "graphology";
 import {
-    DataVertex, DataConstraintAny,
+    DataConstraintAny,
     DataConstraintIsa, DataConstraintIsaExact, DataConstraintHas, DataConstraintLinks,
     DataConstraintSub, DataConstraintSubExact, DataConstraintOwns, DataConstraintRelates,
     DataConstraintPlays, DataConstraintExpression, DataConstraintFunction,
     DataConstraintKind, DataConstraintComparison, DataConstraintIs, DataConstraintIid,
-    DataConstraintLabel, DataConstraintValue,
-    VertexExpression, VertexFunction,
+    DataConstraintLabel, DataConstraintValue, VertexUnavailable,
 } from "../src/rows2graph";
 import { ILogicalGraphConverter } from "../src/converter";
+
+export type VertexExpression = { tag: "expression", kind: "expression", repr: string, answerIndex: number, vertex_map_key: string };
+export type VertexFunction = { tag: "functionCall", kind: "functionCall", repr: string, answerIndex: number, vertex_map_key: string };
+export type DataVertexSpecial = VertexUnavailable | VertexFunction | VertexExpression;
+
+type DataVertex = Concept | DataVertexSpecial;
+
 
 const VERTEX_COLORS: Record<string, string> = {
     entity: "#5DA5DA",

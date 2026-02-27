@@ -5,23 +5,14 @@ import {
     ConstraintLabel, ConstraintLinks, ConstraintOwns, ConstraintPlays, ConstraintRelates,
     ConstraintSpan, ConstraintSub, ConstraintSubExact, ConstraintValue, ConstraintVertexAny,
     ConstraintExpressionLegacy, ConstraintLinksLegacy,
-    Relation, RelationType, RoleType, ThingKind, Type, TypeKind, Value, ValueKind, AnalyzedPipeline, ConstraintAny
+    Relation, RelationType, RoleType, Type,  Value, AnalyzedPipeline, ConstraintAny
 } from "@typedb/driver-http";
 
 ///////////////////////
 // TypeDB Data Graph //
 ///////////////////////
-
-export type SpecialVertexKind = "unavailable" | "expression" | "functionCall";
-
 export type VertexUnavailable = { kind: "unavailable", variable: string, answerIndex: number, vertex_map_key: string };
-export type VertexExpression = { tag: "expression", kind: "expression", repr: string, answerIndex: number, vertex_map_key: string };
-export type VertexFunction = { tag: "functionCall", kind: "functionCall", repr: string, answerIndex: number, vertex_map_key: string };
-export type DataVertexSpecial = VertexUnavailable | VertexFunction | VertexExpression;
-
-export type DataVertexKind = ThingKind | TypeKind | ValueKind | SpecialVertexKind;
-export type DataVertex = Concept | DataVertexSpecial;
-
+export type DataVertex = Concept | VertexUnavailable;
 export type QueryCoordinates = { branch: number, constraint: number };
 
 export type DataGraph = {
@@ -213,40 +204,6 @@ export interface DataConstraintKind {
     type: Type | VertexUnavailable,
 
 }
-
-export interface VertexMetadata {
-    defaultLabel: string;
-    hoverLabel: string;
-    concept: DataVertex;
-}
-
-export interface VertexAttributes {
-    label: string;
-    color: string;
-    size: number;
-    type: string;
-    x: number;
-    y: number;
-    metadata: VertexMetadata;
-    highlighted: boolean;
-}
-
-export interface EdgeMetadata {
-    answerIndex: number;
-    dataEdge: DataConstraintAny;
-}
-
-export interface EdgeAttributes {
-    label: string;
-    color: string;
-    size: number;
-    type: string;
-    metadata: EdgeMetadata;
-}
-
-export interface GraphAttributes {
-}
-
 ///////////////////////////////////
 // TypeDB server -> logical graph
 ///////////////////////////////////
