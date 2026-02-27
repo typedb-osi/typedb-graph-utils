@@ -1,0 +1,19 @@
+{
+  "name": "typedb-visualizer-tutorial",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "esbuild src/index.ts --bundle --outfile=dist/bundle.js --format=iife --global-name=TypeDBGraph",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@typedb/driver-http": "3.8.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.27.3"
+  }
+}
