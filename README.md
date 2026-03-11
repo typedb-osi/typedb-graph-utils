@@ -3,3 +3,4 @@ Graph integrations for TypeDB. Please check the readme within the directory for 
 
 Available languages:
 * [python](python/README.md)
+* [typescript](typescript/README.md)
