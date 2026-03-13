@@ -1,0 +1,27 @@
+{
+  "name": "@typedb/graph-utils",
+  "version": "3.7.0",
+  "description": "TypeDB graph utils",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepare": "tsc",
+    "prepublishOnly": "pnpm run build"
+  },
+  "dependencies": {
+    "@typedb/driver-http": "^3.8.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "packageManager": "pnpm@10.12.1+sha256.889bac470ec93ccc3764488a19d6ba8f9c648ad5e50a9a6e4be3768a5de387a3",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/typedb-osi/typedb-graph-utils"
+  }
+}
