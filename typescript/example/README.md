@@ -8,10 +8,10 @@ pnpm run build
 ```
 
 ## Usage
-1. Open `query.html` in a browser.
+1. Open `index.html` in a browser.
 2. Enter your TypeDB server URL, credentials, and database name.
 3. Sign in, write a query, and click **Run query**.
 
 The results are shown in two tabs:
-- **DataConstraints** — the raw `DataGraph` JSON.
+- **DataConstraints** — the `StructuredAnswer`s created from the response, printed as JSON.
 - **Graph** — an interactive Sigma.js visualisation.
