@@ -1,8 +1,7 @@
 import {
-    AnalyzedConjunction, AnalyzedPipeline,
+    AnalyzedPipeline,
     ConstraintAny, ConstraintExpression, ConstraintVertexVariable,
-    ConstraintExpressionLegacy, ConstraintLinksLegacy,
-    QueryStructureLegacy, QueryConjunctionLegacy, ConceptRowsQueryResponseLegacy,
+    ConstraintExpressionLegacy,
     ConceptRowsQueryResponse,
     Attribute, AttributeType, Concept, ConceptRow,
     getVariableName, ConstraintVertexAny,
@@ -11,29 +10,13 @@ import {
 } from "@typedb/driver-http";
 import { DataConstraintAny, StructuredAnswer, DataVertex, VertexUnavailable, QueryCoordinates } from "./structured-answers";
 
-// Back-compat types & helpers
-
-export type ConstraintBackCompat = ConstraintAny | ConstraintLinksLegacy | ConstraintExpressionLegacy;
-export type ConceptRowsQueryResponseBackCompat = ConceptRowsQueryResponse | ConceptRowsQueryResponseLegacy;
-export type AnalyzedPipelineBackCompat = AnalyzedPipeline | QueryStructureLegacy;
-
-export function backCompat_pipelineBlocks(pipeline: AnalyzedPipelineBackCompat): AnalyzedConjunction[] | QueryConjunctionLegacy[] {
-    if ("blocks" in pipeline) {
-        return pipeline["blocks"];
-    } else if ("conjunctions" in pipeline) {
-        return pipeline["conjunctions"];
-    } else {
-        throw new Error("Unreachable: pipeline neither had blocks nor conjunctions");
-    }
-}
-
 export function backCompat_expressionAssigned(expr: ConstraintExpression | ConstraintExpressionLegacy): ConstraintVertexVariable {
     return (Array.isArray(expr.assigned) ? expr.assigned[0] : expr.assigned) as ConstraintVertexVariable;
 }
 
 // Structured answers builder
 
-export function buildStructuredAnswers(rowsResult: ConceptRowsQueryResponseBackCompat): StructuredAnswer[] {
+export function buildStructuredAnswers(rowsResult: ConceptRowsQueryResponse): StructuredAnswer[] {
     return new StructuredAnswersBuilder().build(rowsResult);
 }
 
@@ -41,11 +24,11 @@ class StructuredAnswersBuilder {
     constructor() {
     }
 
-    build(rowsResult: ConceptRowsQueryResponseBackCompat): StructuredAnswer[] {
+    build(rowsResult: ConceptRowsQueryResponse): StructuredAnswer[] {
         let answers: StructuredAnswer[] = [];
         rowsResult.answers.forEach((row, answerIndex) => {
             let constraints = row.involvedBlocks!.flatMap(branchIndex => {
-                return backCompat_pipelineBlocks(rowsResult.query!)[branchIndex].constraints.map((constraint, constraintIndex) => {
+                return rowsResult.query!.conjunctions[branchIndex].constraints.map((constraint, constraintIndex) => {
                     return this.toDataConstraint(rowsResult.query!, answerIndex, constraint, row.data, {
                         branch: branchIndex,
                         constraint: constraintIndex
@@ -57,7 +40,7 @@ class StructuredAnswersBuilder {
         return answers;
     }
 
-    translateVertex(structure: AnalyzedPipelineBackCompat, structureVertex: ConstraintVertexAny, answerIndex: number, data: ConceptRow): DataVertex {
+    translateVertex(structure: AnalyzedPipeline, structureVertex: ConstraintVertexAny, answerIndex: number, data: ConceptRow): DataVertex {
         switch (structureVertex.tag) {
             case "variable": {
                 let name = getVariableName(structure, structureVertex);
@@ -87,7 +70,7 @@ class StructuredAnswersBuilder {
         }
     }
 
-    private toDataConstraint(structure: AnalyzedPipelineBackCompat, answerIndex: number, constraint: ConstraintBackCompat, data: ConceptRow, coordinates: QueryCoordinates): DataConstraintAny | null{
+    private toDataConstraint(structure: AnalyzedPipeline, answerIndex: number, constraint: ConstraintAny, data: ConceptRow, coordinates: QueryCoordinates): DataConstraintAny | null{
         switch (constraint.tag) {
             case "isa": {
                 return {

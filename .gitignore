@@ -14,3 +14,5 @@ python/dist
 # TypeScript / pnpm
 typescript/node_modules
 typescript/dist
+typescript/example/node_modules
+typescript/example/dist

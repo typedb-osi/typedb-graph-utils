@@ -13,15 +13,10 @@ import {
 // TypeDB Data Graph //
 ///////////////////////
 
-export type SpecialVertexKind = "unavailable" | "expression" | "functionCall";
-
-export type VertexUnavailable = { kind: "unavailable", variable: string, answerIndex: number, vertexMapKey: string };
-export type VertexExpression = { tag: "expression", kind: "expression", repr: string, answerIndex: number, vertexMapKey: string };
-export type VertexFunction = { tag: "functionCall", kind: "functionCall", repr: string, answerIndex: number, vertexMapKey: string };
-export type VertexSpecial = VertexUnavailable | VertexFunction | VertexExpression;
-
-export type VertexKind = ThingKind | TypeKind | ValueKind | SpecialVertexKind;
-export type DataVertex = Concept | VertexSpecial;
+export type UnavailableVertexKind =  "unavailable";
+export type VertexKind = ThingKind | TypeKind | ValueKind | "unavailable";
+export type VertexUnavailable = { kind: UnavailableVertexKind, variable: string, answerIndex: number, vertexMapKey: string };
+export type DataVertex = Concept | VertexUnavailable;
 
 export function getTypeLabel(vertex: DataVertex): string | undefined {
     if ("type" in vertex && vertex.type && "label" in vertex.type) return (vertex.type as { label: string }).label;
