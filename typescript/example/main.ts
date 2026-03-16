@@ -1,4 +1,4 @@
-export { buildStructuredAnswers,  } from "../src/index";
+export { buildStructuredAnswers } from "@typedb/graph-utils";
 export { SigmaConverter } from "./sigmajs-converter";
 export { MultiGraph } from "graphology";
 import Sigma from "sigma";

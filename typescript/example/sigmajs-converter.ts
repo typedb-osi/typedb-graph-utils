@@ -1,13 +1,13 @@
 import {Concept, ConstraintVertexAny} from "@typedb/driver-http";
 import { MultiGraph } from "graphology";
 import {
+    AbstractGraphBuilder,
     DataConstraintIsa, DataConstraintIsaExact, DataConstraintHas, DataConstraintLinks,
     DataConstraintSub, DataConstraintSubExact, DataConstraintOwns, DataConstraintRelates,
     DataConstraintPlays, DataConstraintExpression, DataConstraintFunction,
     DataConstraintKind, DataConstraintComparison, DataConstraintIs, DataConstraintIid,
     DataConstraintLabel, DataConstraintValue, VertexUnavailable,
-} from "../src";
-import { AbstractGraphBuilder } from "../src";
+} from "@typedb/graph-utils";
 
 export type VertexExpression = { tag: "expression", kind: "expression", repr: string, answerIndex: number, vertex_map_key: string };
 export type VertexFunction = { tag: "functionCall", kind: "functionCall", repr: string, answerIndex: number, vertex_map_key: string };

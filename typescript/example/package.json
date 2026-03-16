@@ -9,7 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@typedb/driver-http": "3.8.0",
+    "@typedb/graph-utils": "workspace:*",
     "graphology": "^0.26.0",
     "graphology-layout-forceatlas2": "^0.10.1",
     "sigma": "^3.0.2"
