@@ -59,7 +59,7 @@
     <div id="build-error">Bundle not found. Run <code>pnpm run build</code> first.</div>
 
     <div class="tabs">
-        <div class="tab active" onclick="switchTab('constraints')">DataConstraints</div>
+        <div class="tab active" onclick="switchTab('constraints')">StructuredAnswers</div>
         <div class="tab" onclick="switchTab('graph')">Graph</div>
     </div>
     <div id="tab-constraints" class="tab-content active"></div>
@@ -88,7 +88,7 @@
             statusEl.className = "";
 
             try {
-                driver = new TypeDBGraph.TypeDBHttpDriver({
+                driver = new SigmaJSExample.TypeDBHttpDriver({
                     username,
                     password,
                     addresses: [base],
@@ -112,7 +112,6 @@
 
             constraintsEl.textContent = "Running...";
             constraintsEl.className = "tab-content active";
-            document.getElementById("sigma-container").innerHTML = "";
             graphEl.className = "tab-content";
             switchTab('constraints');
 
@@ -126,25 +125,24 @@
                     undefined,
                     { includeQueryStructure: true },
                 );
-
-                if (TypeDBGraph.isOkResponse(response)) {
+                // This is the interesting part
+                if (SigmaJSExample.isOkResponse(response)) {
                     const body = response.ok;
                     if (body.answerType === "conceptRows") {
-                        const structuredAnswers = TypeDBGraph.buildStructuredAnswers(body);
+                        switchTab('graph');
+                        // Initialise in case we hadn't yet.
+                        if (sigmaInstance == null) {
+                            sigmaInstance = SigmaJSExample.initialise(document.getElementById("sigma-container"));
+                        }
+
+                        // Update the raw intermediate representation.
+                        const structuredAnswers = sigmaInstance.buildStructuredAnswers(body);
                         constraintsEl.textContent = JSON.stringify(structuredAnswers, null, 2);
 
-                        // Build sigma graph
-                        if (sigmaInstance) { sigmaInstance.kill(); sigmaInstance = null; }
-                        const multiGraph = new TypeDBGraph.MultiGraph();
-                        const converter = new TypeDBGraph.SigmaConverter(multiGraph);
-                        converter.build(structuredAnswers);
-                        const settings = TypeDBGraph.forceAtlas2.inferSettings(multiGraph);
-                        TypeDBGraph.forceAtlas2.assign(multiGraph, { iterations: 50, settings });
+                        // Update the graph from these.
+                        sigmaInstance.updateGraph(structuredAnswers)
+
                         switchTab('graph');
-                        const container = document.getElementById("sigma-container");
-                        sigmaInstance = new TypeDBGraph.Sigma(multiGraph, container, {
-                            renderEdgeLabels: true,
-                        });
                     } else {
                         constraintsEl.textContent = JSON.stringify(body, null, 2);
                     }
