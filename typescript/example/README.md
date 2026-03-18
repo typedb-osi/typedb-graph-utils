@@ -13,5 +13,5 @@ pnpm run build
 3. Sign in, write a query, and click **Run query**.
 
 The results are shown in two tabs:
-- **DataConstraints** — the `StructuredAnswer`s created from the response, printed as JSON.
+- **DataConstraints** — the raw `DataGraph` JSON.
 - **Graph** — an interactive Sigma.js visualisation.
