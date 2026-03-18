@@ -67,8 +67,7 @@
 
     <script src="dist/bundle.js" onerror="document.getElementById('build-error').style.display='block'"></script>
     <script>
-        let token = null;
-        let baseUrl = null;
+        let driver = null;
         let sigmaInstance = null;
 
         function switchTab(name) {
@@ -89,25 +88,17 @@
             statusEl.className = "";
 
             try {
-                const resp = await fetch(`${base}/v1/signin`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ username, password }),
+                driver = new TypeDBGraph.TypeDBHttpDriver({
+                    username,
+                    password,
+                    addresses: [base],
                 });
-                if (!resp.ok) {
-                    const err = await resp.text();
-                    throw new Error(`Sign-in failed (${resp.status}): ${err}`);
-                }
-                const body = await resp.json();
-                token = body.token;
-                baseUrl = base;
-                statusEl.textContent = "Signed in.";
+                statusEl.textContent = "Driver created.";
                 document.getElementById("queryBtn").disabled = false;
             } catch (e) {
                 statusEl.className = "error";
                 statusEl.textContent = e.message;
-                token = null;
-                baseUrl = null;
+                driver = null;
                 document.getElementById("queryBtn").disabled = true;
             }
         }
@@ -127,24 +118,18 @@
 
             try {
                 const commit = txType === "write" || txType === "schema";
-                const resp = await fetch(`${baseUrl}/v1/query`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${token}`,
-                    },
-                    body: JSON.stringify({
-                        query,
-                        commit,
-                        databaseName: database,
-                        transactionType: txType,
-                        queryOptions: { includeQueryStructure: true },
-                    }),
-                });
+                const response = await driver.oneShotQuery(
+                    query,
+                    commit,
+                    database,
+                    txType,
+                    undefined,
+                    { includeQueryStructure: true },
+                );
 
-                const body = await resp.json();
-                if (resp.ok) {
-                    if (body.answerType === "conceptRows" && typeof TypeDBGraph !== "undefined") {
+                if (TypeDBGraph.isOkResponse(response)) {
+                    const body = response.ok;
+                    if (body.answerType === "conceptRows") {
                         const structuredAnswers = TypeDBGraph.buildStructuredAnswers(body);
                         constraintsEl.textContent = JSON.stringify(structuredAnswers, null, 2);
 
@@ -165,7 +150,7 @@
                     }
                 } else {
                     constraintsEl.className = "tab-content active error";
-                    constraintsEl.textContent = JSON.stringify(body, null, 2);
+                    constraintsEl.textContent = JSON.stringify(response.err, null, 2);
                 }
             } catch (e) {
                 constraintsEl.className = "tab-content active error";

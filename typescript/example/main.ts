@@ -1,3 +1,4 @@
+export { TypeDBHttpDriver, isOkResponse } from "@typedb/driver-http";
 export { buildStructuredAnswers } from "@typedb/graph-utils";
 export { SigmaConverter } from "./sigmajs-converter";
 export { MultiGraph } from "graphology";
