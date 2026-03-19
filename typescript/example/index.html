@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TypeDB Query</title>
+    <style>
+        body { font-family: sans-serif; max-width: 700px; margin: 40px auto; padding: 0 20px; }
+        label { display: block; margin-top: 12px; font-weight: bold; }
+        input, textarea, select { width: 100%; padding: 8px; margin-top: 4px; box-sizing: border-box; font-family: monospace; }
+        textarea { height: 120px; resize: vertical; }
+        button { margin-top: 16px; padding: 10px 24px; cursor: pointer; }
+        .error { color: red; }
+        #build-error { margin-top: 20px; padding: 12px; background: #fee; border: 1px solid #c00; color: #c00; display: none; }
+
+        .tabs { display: flex; gap: 0; margin-top: 20px; }
+        .tab { padding: 8px 20px; cursor: pointer; border: 1px solid #ccc; border-bottom: none; background: #eee; font-weight: bold; }
+        .tab.active { background: #f4f4f4; border-bottom: 1px solid #f4f4f4; }
+        .tab-content { display: none; white-space: pre-wrap; background: #f4f4f4; padding: 12px; font-family: monospace; font-size: 13px; min-height: 40px; border: 1px solid #ccc; border-top: none; }
+        .tab-content.active { display: block; }
+        #sigma-container { width: 100%; height: 500px; }
+    </style>
+</head>
+<body>
+    <h2>TypeDB Query</h2>
+
+    <label>Server URL
+        <input id="url" type="text" value="http://localhost:8000" />
+    </label>
+
+    <label>Username
+        <input id="username" type="text" value="admin" />
+    </label>
+
+    <label>Password
+        <input id="password" type="password" value="password" />
+    </label>
+
+    <label>Database
+        <input id="database" type="text" placeholder="my_database" />
+    </label>
+
+    <label>Transaction type
+        <select id="txType">
+            <option value="read" selected>read</option>
+            <option value="write">write</option>
+            <option value="schema">schema</option>
+        </select>
+    </label>
+
+    <label>Query
+        <textarea id="query" placeholder="match $x isa person; fetch { $x.name };"></textarea>
+    </label>
+
+    <button id="signinBtn" onclick="signin()">Sign in</button>
+    <button id="queryBtn" onclick="runQuery()" disabled>Run query</button>
+
+    <div id="status"></div>
+    <div id="build-error">Bundle not found. Run <code>pnpm run build</code> first.</div>
+
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('constraints')">StructuredAnswers</div>
+        <div class="tab" onclick="switchTab('graph')">Graph</div>
+    </div>
+    <div id="tab-constraints" class="tab-content active"></div>
+    <div id="tab-graph" class="tab-content"><div id="sigma-container"></div></div>
+
+    <script src="dist/bundle.js" onerror="document.getElementById('build-error').style.display='block'"></script>
+    <script>
+        let driver = null;
+        let sigmaInstance = null;
+
+        function switchTab(name) {
+            document.querySelectorAll('.tab').forEach((t, i) => {
+                t.classList.toggle('active', t.textContent === (name === 'constraints' ? 'DataConstraints' : 'Graph'));
+            });
+            document.getElementById('tab-constraints').classList.toggle('active', name === 'constraints');
+            document.getElementById('tab-graph').classList.toggle('active', name === 'graph');
+        }
+
+        async function signin() {
+            const base = document.getElementById("url").value.replace(/\/+$/, "");
+            const username = document.getElementById("username").value;
+            const password = document.getElementById("password").value;
+            const statusEl = document.getElementById("status");
+
+            statusEl.textContent = "Signing in...";
+            statusEl.className = "";
+
+            try {
+                driver = new SigmaJSExample.TypeDBHttpDriver({
+                    username,
+                    password,
+                    addresses: [base],
+                });
+                statusEl.textContent = "Driver created.";
+                document.getElementById("queryBtn").disabled = false;
+            } catch (e) {
+                statusEl.className = "error";
+                statusEl.textContent = e.message;
+                driver = null;
+                document.getElementById("queryBtn").disabled = true;
+            }
+        }
+
+        async function runQuery() {
+            const database = document.getElementById("database").value;
+            const txType = document.getElementById("txType").value;
+            const query = document.getElementById("query").value;
+            const constraintsEl = document.getElementById("tab-constraints");
+            const graphEl = document.getElementById("tab-graph");
+
+            constraintsEl.textContent = "Running...";
+            constraintsEl.className = "tab-content active";
+            graphEl.className = "tab-content";
+            switchTab('constraints');
+
+            try {
+                const commit = txType === "write" || txType === "schema";
+                const response = await driver.oneShotQuery(
+                    query,
+                    commit,
+                    database,
+                    txType,
+                    undefined,
+                    { includeQueryStructure: true },
+                );
+                // This is the interesting part
+                if (SigmaJSExample.isOkResponse(response)) {
+                    const body = response.ok;
+                    if (body.answerType === "conceptRows") {
+                        switchTab('graph');
+                        // Initialise in case we hadn't yet.
+                        if (sigmaInstance == null) {
+                            sigmaInstance = SigmaJSExample.initialise(document.getElementById("sigma-container"));
+                        }
+
+                        // Update the raw intermediate representation.
+                        const structuredAnswers = sigmaInstance.buildStructuredAnswers(body);
+                        constraintsEl.textContent = JSON.stringify(structuredAnswers, null, 2);
+
+                        // Update the graph from these.
+                        sigmaInstance.updateGraph(structuredAnswers)
+
+                        switchTab('graph');
+                    } else {
+                        constraintsEl.textContent = JSON.stringify(body, null, 2);
+                    }
+                } else {
+                    constraintsEl.className = "tab-content active error";
+                    constraintsEl.textContent = JSON.stringify(response.err, null, 2);
+                }
+            } catch (e) {
+                constraintsEl.className = "tab-content active error";
+                constraintsEl.textContent = e.message;
+            }
+        }
+    </script>
+</body>
+</html>
