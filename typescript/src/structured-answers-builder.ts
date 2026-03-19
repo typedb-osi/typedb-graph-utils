@@ -205,7 +205,7 @@ class StructuredAnswersBuilder {
                     queryConstraint: constraint,
 
                     lhs: this.translateVertex(structure, constraint.lhs, answerIndex, data) as (Value | Attribute | VertexUnavailable),
-                    rhs: this.translateVertex(structure, constraint.lhs, answerIndex, data) as (Value | Attribute | VertexUnavailable),
+                    rhs: this.translateVertex(structure, constraint.rhs, answerIndex, data) as (Value | Attribute | VertexUnavailable),
                     comparator: constraint.comparator,
                 }
             }
@@ -217,7 +217,7 @@ class StructuredAnswersBuilder {
                     queryConstraint: constraint,
 
                     lhs: this.translateVertex(structure, constraint.lhs, answerIndex, data) as (Concept | VertexUnavailable),
-                    rhs: this.translateVertex(structure, constraint.lhs, answerIndex, data) as (Concept | VertexUnavailable),
+                    rhs: this.translateVertex(structure, constraint.rhs, answerIndex, data) as (Concept | VertexUnavailable),
                 }
             }
             case "iid" : {

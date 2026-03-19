@@ -143,9 +143,13 @@ export class SigmaConverter extends AbstractGraphBuilder {
     }
 
     expression(answerIndex: number, c: DataConstraintExpression): void {
+        // Create a unique key based on the constraint and the arguments.
+        let coordinates = `${c.queryCoordinates.branch}:${c.queryCoordinates.constraint}`;
+        let vertex_map_key = `expr@[${coordinates}](${c.arguments.map(v => vertexMapKey(v)).join(",")})`
+
         const exprVertex: VertexExpression = {
             tag: "expression", kind: "expression", repr: c.text,
-            answerIndex, vertex_map_key: `expr(${c.arguments.map(v => vertexMapKey(v)).join(",")})`,
+            answerIndex, vertex_map_key: vertex_map_key,
         };
         this.addEdge("=", exprVertex, c.assigned);
         c.arguments.forEach(arg => {

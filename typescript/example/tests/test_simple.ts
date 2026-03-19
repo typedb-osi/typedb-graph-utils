@@ -104,13 +104,11 @@ describe("friendships", () => {
         const response = await runQuery(driver, QUERY);
         assert(response.query != null, "TypeDB no query structure");
     });
-
-    it("builds graph with 9 nodes and 9 edges", async () => {
+    it("builds graph with 9 nodes and 11 edges", async () => {
         const response = await runQuery(driver, QUERY);
         const graph = buildGraph(response);
-
         assert.equal(graph.order, 9, "node count mismatch");
-        assert.equal(graph.size, 9, "edge count mismatch");
+        assert.equal(graph.size, 11, "edge count mismatch");
     });
 });
 
