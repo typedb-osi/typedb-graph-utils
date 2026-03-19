@@ -103,7 +103,10 @@ export class SigmaConverter extends AbstractGraphBuilder {
     }
 
     isa(_answerIndex: number, c: DataConstraintIsa): void {
-        this.addEdge("isa", c.instance, c.type);
+        if (c.queryConstraint.type.tag == "variable") {
+            // We ignore `isa <label>` edges to reduce noise
+            this.addEdge("isa", c.instance, c.type);
+        }
     }
 
     isaExact(_answerIndex: number, c: DataConstraintIsaExact): void {

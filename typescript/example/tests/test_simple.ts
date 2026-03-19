@@ -105,15 +105,12 @@ describe("friendships", () => {
         assert(response.query != null, "TypeDB no query structure");
     });
 
-    it("builds graph with expected node and edge counts", async () => {
+    it("builds graph with 9 nodes and 9 edges", async () => {
         const response = await runQuery(driver, QUERY);
         const graph = buildGraph(response);
 
-        // Python NetworkXBuilder: 9 nodes, 9 edges
-        // SigmaConverter may differ because it handles comparison constraints (Python skips them)
-        console.log(`  friendships: ${graph.order} nodes, ${graph.size} edges`);
-        assert(graph.order > 0, "Graph should have nodes");
-        assert(graph.size > 0, "Graph should have edges");
+        assert.equal(graph.order, 9, "node count mismatch");
+        assert.equal(graph.size, 9, "edge count mismatch");
     });
 });
 
@@ -136,14 +133,12 @@ describe("expression_disjunction", () => {
         assert(response.query != null, "TypeDB no query structure");
     });
 
-    it("builds graph with expected node and edge counts", async () => {
+    it("builds graph with 11 nodes and 10 edges", async () => {
         const response = await runQuery(driver, QUERY);
         const graph = buildGraph(response);
 
-        // Python NetworkXBuilder: 11 nodes, 10 edges
         // 2 + 4 expression nodes, 4 values for x + 2 values for y (value 5 is shared)
-        console.log(`  expression_disjunction: ${graph.order} nodes, ${graph.size} edges`);
-        assert(graph.order > 0, "Graph should have nodes");
-        assert(graph.size > 0, "Graph should have edges");
+        assert.equal(graph.order, 11, "node count mismatch");
+        assert.equal(graph.size, 10, "edge count mismatch");
     });
 });
