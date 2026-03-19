@@ -1,0 +1,46 @@
+name: Graph visualizer typescript CI
+
+on:
+  push:
+    paths:
+      - 'typescript/**'
+      - '.github/workflows/typescript-ci.yml'
+  pull_request:
+    paths:
+      - 'typescript/**'
+      - '.github/workflows/typescript-ci.yml'
+
+jobs:
+  run-tests:
+    name: Run typescript tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup TypeDB
+        uses: typedb/setup-typedb@1.0.0
+        with:
+          typedb_version: 3.7.0
+          typedb_args: "--development-mode.enabled=true"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install pnpm
+        run: corepack enable && corepack prepare pnpm@10.12.1 --activate
+
+      - name: Install dependencies
+        working-directory: typescript
+        run: pnpm install --registry https://registry.npmjs.org/
+
+      - name: Build library
+        working-directory: typescript
+        run: pnpm run build
+
+      - name: Run tests
+        working-directory: typescript/example
+        run: pnpm test
