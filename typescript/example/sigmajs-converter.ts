@@ -175,7 +175,7 @@ export class SigmaConverter extends AbstractGraphBuilder {
     }
 
     comparison(_answerIndex: number, c: DataConstraintComparison): void {
-        this.addEdge(c.comparator, c.lhs, c.rhs);
+        this.addEdge(`cmp(${c.comparator})`, c.lhs, c.rhs);
     }
 
     is(_answerIndex: number, c: DataConstraintIs): void {
