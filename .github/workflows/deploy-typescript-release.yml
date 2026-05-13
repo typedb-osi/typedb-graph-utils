@@ -1,0 +1,151 @@
+name: Deploy TypeScript release
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (skip npm publish, tag push, and GitHub Release)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    name: Validate release inputs
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.read-version.outputs.version }}
+      tag: ${{ steps.read-version.outputs.tag }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify VERSION matches package.json
+        working-directory: typescript
+        run: node tool/verify-version.js
+
+      - name: Read VERSION
+        id: read-version
+        working-directory: typescript
+        run: |
+          VERSION=$(cat VERSION | tr -d '[:space:]')
+          if [[ -z "${VERSION}" ]]; then
+            echo "ERROR: typescript/VERSION is empty." >&2
+            exit 1
+          fi
+          if ! [[ "${VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "ERROR: VERSION '${VERSION}' is not a valid semver." >&2
+            exit 1
+          fi
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "tag=typescript-${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Verify tag does not already exist
+        run: |
+          TAG="${{ steps.read-version.outputs.tag }}"
+          if git rev-parse "refs/tags/${TAG}" >/dev/null 2>&1; then
+            echo "ERROR: tag '${TAG}' already exists. Bump typescript/VERSION." >&2
+            exit 1
+          fi
+          echo "Tag '${TAG}' is available."
+
+      - name: Verify version not already on npm
+        run: |
+          VERSION="${{ steps.read-version.outputs.version }}"
+          if npm view "@typedb/graph-utils@${VERSION}" version >/dev/null 2>&1; then
+            echo "ERROR: @typedb/graph-utils@${VERSION} is already published to npm." >&2
+            exit 1
+          fi
+          echo "Version '${VERSION}' is not yet on npm."
+
+      - name: Validate RELEASE_NOTES_LATEST.md
+        working-directory: typescript
+        run: |
+          if [[ ! -s RELEASE_NOTES_LATEST.md ]]; then
+            echo "ERROR: typescript/RELEASE_NOTES_LATEST.md is missing or empty." >&2
+            exit 1
+          fi
+          echo "Release notes present."
+
+  publish:
+    name: Publish release
+    needs: validate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup TypeDB
+        uses: typedb/setup-typedb@1.0.0
+        with:
+          typedb_version: 3.7.0
+          typedb_args: "--development-mode.enabled=true"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org/'
+
+      - name: Install pnpm
+        run: corepack enable && corepack prepare pnpm@10.12.1 --activate
+
+      - name: Install dependencies
+        working-directory: typescript
+        run: pnpm install --registry https://registry.npmjs.org/
+
+      - name: Build library
+        working-directory: typescript
+        run: pnpm run build
+
+      - name: Run tests
+        working-directory: typescript/example
+        run: pnpm test
+
+      - name: Pin package.json to release version
+        working-directory: typescript
+        run: node tool/set-version.js "${{ needs.validate.outputs.version }}"
+
+      - name: Configure npmjs.org auth
+        working-directory: typescript
+        run: |
+          cat > .npmrc <<EOF
+          registry=https://registry.npmjs.org/
+          //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}
+          EOF
+
+      - name: Publish to npm
+        if: ${{ !inputs.dry_run }}
+        working-directory: typescript
+        run: pnpm publish --access public --no-git-checks
+
+      - name: Publish to npm (dry-run)
+        if: ${{ inputs.dry_run }}
+        working-directory: typescript
+        run: pnpm publish --access public --no-git-checks --dry-run
+
+      - name: Create and push tag
+        if: ${{ !inputs.dry_run }}
+        env:
+          TAG: ${{ needs.validate.outputs.tag }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "${TAG}" -m "TypeScript release ${{ needs.validate.outputs.version }}"
+          git push origin "${TAG}"
+
+      - name: Create GitHub Release
+        if: ${{ !inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.validate.outputs.tag }}
+          VERSION: ${{ needs.validate.outputs.version }}
+        run: |
+          gh release create "${TAG}" \
+            --title "TypeScript ${VERSION}" \
+            --notes-file typescript/RELEASE_NOTES_LATEST.md
