@@ -49,10 +49,8 @@ jobs:
 
       - name: Compute snapshot version
         id: version
-        working-directory: typescript
         run: |
-          BASE=$(cat VERSION)
-          SNAPSHOT="${BASE}-${GITHUB_SHA}"
+          SNAPSHOT="0.0.0-${GITHUB_SHA}"
           echo "snapshot=${SNAPSHOT}" >> "$GITHUB_OUTPUT"
           echo "Snapshot version: ${SNAPSHOT}"
 
