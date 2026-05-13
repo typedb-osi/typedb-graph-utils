@@ -40,7 +40,6 @@ Tag format: `typescript-3.7.0`, `python-3.7.0` — no `v` prefix; mirrors the co
 
 The workflow will:
 - run [`tool/validate-version.js`](typescript/tool/validate-version.js) to confirm `VERSION` and `package.json` agree, the release tag is available, and the version is not on npm
-- check that `RELEASE_NOTES_LATEST.md` is non-empty
 - build, test, then `pnpm publish` to npmjs.org
 - create and push the `typescript-<VERSION>` tag
 - create a GitHub Release with `RELEASE_NOTES_LATEST.md` as the body

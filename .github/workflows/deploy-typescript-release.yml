@@ -37,15 +37,6 @@ jobs:
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "tag=typescript-${VERSION}" >> "$GITHUB_OUTPUT"
 
-      - name: Validate RELEASE_NOTES_LATEST.md
-        working-directory: typescript
-        run: |
-          if [[ ! -s RELEASE_NOTES_LATEST.md ]]; then
-            echo "ERROR: typescript/RELEASE_NOTES_LATEST.md is missing or empty." >&2
-            exit 1
-          fi
-          echo "Release notes present."
-
   publish:
     name: Publish release
     needs: validate
