@@ -57,7 +57,7 @@ The workflow will:
 
 ### Triggering the workflow
 
-**GitHub UI:** Actions → **Deploy TypeScript release** → **Run workflow** → pick branch `master` → click **Run workflow**. A `dry_run` checkbox is available; when checked, the workflow builds and runs `pnpm publish --dry-run` but skips the npm publish, tag push, and GitHub Release.
+**GitHub UI:** Actions → **Deploy TypeScript release** → **Run workflow** → pick branch `master` → click **Run workflow**. A `dry_run` checkbox is available; when checked, the workflow builds and runs `pnpm publish --dry-run` (which validates auth and prints the publish notice without uploading) and skips the tag push and GitHub Release.
 
 **GitHub CLI** (`gh auth login` with the `workflow` scope):
 ```shell
@@ -76,7 +76,7 @@ curl -X POST \
 
 ## Snapshots
 
-Every push to `master` under `typescript/**` publishes a snapshot to the Cloudsmith npm registry at `https://npm.cloudsmith.io/typedb/public-snapshot/`. The snapshot version is `0.0.0-<commit-sha>`. The `Deploy TypeScript snapshot` workflow can also be triggered manually via `workflow_dispatch` (useful for verifying the pipeline from a feature branch).
+Every push to `master` under `typescript/**` publishes a snapshot to the Cloudsmith npm registry at `https://npm.cloudsmith.io/typedb/public-snapshot/`. The snapshot version is `0.0.0-<commit-sha>`.
 
 Consume a snapshot with:
 ```shell

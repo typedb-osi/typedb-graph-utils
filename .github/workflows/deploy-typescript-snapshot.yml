@@ -4,12 +4,9 @@ on:
   push:
     branches:
       - master
-      # TODO: temporary - testing this workflow on a PR branch before merge. Remove after merge.
-      - ts-gha
     paths:
       - 'typescript/**'
       - '.github/workflows/deploy-typescript-snapshot.yml'
-  workflow_dispatch:
 
 jobs:
   publish-snapshot:

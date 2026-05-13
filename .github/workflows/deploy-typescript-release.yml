@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       dry_run:
-        description: 'Dry run (skip npm publish, tag push, and GitHub Release)'
+        description: 'Dry run (use pnpm publish --dry-run; no tag push, no GitHub release)'
         type: boolean
         default: false
 
