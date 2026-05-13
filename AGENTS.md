@@ -32,7 +32,37 @@ Releases are triggered manually from the GitHub Actions **Run workflow** button 
 
 Tag format: `typescript-3.7.0`, `python-3.7.0` — no `v` prefix; mirrors the convention used in typedb-driver, typedb, typedb-studio.
 
-The full procedure (including CLI and REST invocation) lives in the per-language README — see [`typescript/README.md`](typescript/README.md#publishing-a-release).
+### Releasing TypeScript
+
+1. Open a PR that bumps both [`typescript/VERSION`](typescript/VERSION) and [`typescript/package.json`](typescript/package.json) to the new version, and updates [`typescript/RELEASE_NOTES_LATEST.md`](typescript/RELEASE_NOTES_LATEST.md). Run `node tool/set-version.js <new-version>` from `typescript/` to keep the two version fields in sync.
+2. Merge the PR to `master`.
+3. Trigger the **Deploy TypeScript release** workflow on `master`.
+
+The workflow will:
+- run [`tool/validate-version.js`](typescript/tool/validate-version.js) to confirm `VERSION` and `package.json` agree, the release tag is available, and the version is not on npm
+- check that `RELEASE_NOTES_LATEST.md` is non-empty
+- build, test, then `pnpm publish` to npmjs.org
+- create and push the `typescript-<VERSION>` tag
+- create a GitHub Release with `RELEASE_NOTES_LATEST.md` as the body
+
+#### Triggering the workflow
+
+**GitHub UI:** Actions → **Deploy TypeScript release** → **Run workflow** → pick branch `master` → click **Run workflow**. A `dry_run` checkbox is available; when checked, the workflow builds and runs `pnpm publish --dry-run` (which validates auth and prints the publish notice without uploading) and skips the tag push and GitHub Release.
+
+**GitHub CLI** (`gh auth login` with the `workflow` scope):
+```shell
+gh workflow run deploy-typescript-release.yml --ref master
+gh workflow run deploy-typescript-release.yml --ref master -f dry_run=true
+```
+
+**REST API** (token needs `actions: write` and `contents: write`):
+```shell
+curl -X POST \
+  -H "Accept: application/vnd.github+json" \
+  -H "Authorization: Bearer $GH_TOKEN" \
+  https://api.github.com/repos/typedb-osi/typedb-graph-utils/actions/workflows/deploy-typescript-release.yml/dispatches \
+  -d '{"ref":"master","inputs":{"dry_run":"false"}}'
+```
 
 ## CI secrets
 
