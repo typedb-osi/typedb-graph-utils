@@ -1,0 +1,70 @@
+name: Deploy TypeScript snapshot
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'typescript/**'
+      - '.github/workflows/deploy-typescript-snapshot.yml'
+
+jobs:
+  publish-snapshot:
+    name: Publish snapshot to Cloudsmith
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup TypeDB
+        uses: typedb/setup-typedb@1.0.0
+        with:
+          typedb_version: 3.7.0
+          typedb_args: "--development-mode.enabled=true"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install pnpm
+        run: corepack enable && corepack prepare pnpm@10.12.1 --activate
+
+      - name: Install dependencies
+        working-directory: typescript
+        run: pnpm install --registry https://registry.npmjs.org/
+
+      - name: Build library
+        working-directory: typescript
+        run: pnpm run build
+
+      - name: Run tests
+        working-directory: typescript/example
+        run: pnpm test
+
+      - name: Compute snapshot version
+        id: version
+        run: |
+          SNAPSHOT="0.0.0-${GITHUB_SHA}"
+          echo "snapshot=${SNAPSHOT}" >> "$GITHUB_OUTPUT"
+          echo "Snapshot version: ${SNAPSHOT}"
+
+      - name: Set snapshot version in package.json
+        working-directory: typescript
+        run: node tool/set-version.js "${{ steps.version.outputs.snapshot }}"
+
+      - name: Configure Cloudsmith npm registry
+        working-directory: typescript
+        env:
+          DEPLOY_NPM_TOKEN: ${{ secrets.REPO_TYPEDB_TOKEN }}
+        run: |
+          cat > .npmrc <<EOF
+          registry=https://npm.cloudsmith.io/typedb/public-snapshot/
+          //npm.cloudsmith.io/typedb/public-snapshot/:_authToken=${DEPLOY_NPM_TOKEN}
+          EOF
+
+      - name: Publish snapshot
+        working-directory: typescript
+        run: pnpm publish --access public --no-git-checks --registry https://npm.cloudsmith.io/typedb/public-snapshot/

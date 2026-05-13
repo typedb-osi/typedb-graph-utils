@@ -34,3 +34,9 @@ graphBuilder.build(dataGraph);
 ```
 
 A complete working example using Sigma.js for browser visualisation is in [example/](example/).
+
+## Releases
+
+Released versions of `@typedb/graph-utils` are published to [npmjs.org](https://www.npmjs.com/package/@typedb/graph-utils). Maintainers creating a release should follow the procedure in [`AGENTS.md`](../AGENTS.md#releasing-typescript).
+
+Snapshot builds are published to Cloudsmith.

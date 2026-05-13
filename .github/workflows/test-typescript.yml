@@ -1,14 +1,14 @@
-name: Graph visualizer typescript CI
+name: Test TypeScript
 
 on:
   push:
     paths:
       - 'typescript/**'
-      - '.github/workflows/typescript-ci.yml'
+      - '.github/workflows/test-typescript.yml'
   pull_request:
     paths:
       - 'typescript/**'
-      - '.github/workflows/typescript-ci.yml'
+      - '.github/workflows/test-typescript.yml'
 
 jobs:
   run-tests:

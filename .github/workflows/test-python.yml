@@ -1,14 +1,14 @@
-name: Graph visualizer python CI
+name: Test Python
 
 on:
   push:
     paths:
       - 'python/**'
-      - '.github/workflows/python-ci.yml'
+      - '.github/workflows/test-python.yml'
   pull_request:
     paths:
       - 'python/**'
-      - '.github/workflows/python-ci.yml'
+      - '.github/workflows/test-python.yml'
 
 jobs:
   run-tests:

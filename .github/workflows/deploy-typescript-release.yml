@@ -1,0 +1,116 @@
+name: Deploy TypeScript release
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (use pnpm publish --dry-run; no tag push, no GitHub release)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    name: Validate release
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.resolve.outputs.version }}
+      tag: ${{ steps.resolve.outputs.tag }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate version
+        working-directory: typescript
+        run: node tool/validate-version.js
+
+      - name: Resolve version and tag
+        id: resolve
+        working-directory: typescript
+        run: |
+          VERSION=$(cat VERSION | tr -d '[:space:]')
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "tag=typescript-${VERSION}" >> "$GITHUB_OUTPUT"
+
+  publish:
+    name: Publish release
+    needs: validate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup TypeDB
+        uses: typedb/setup-typedb@1.0.0
+        with:
+          typedb_version: 3.7.0
+          typedb_args: "--development-mode.enabled=true"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org/'
+
+      - name: Install pnpm
+        run: corepack enable && corepack prepare pnpm@10.12.1 --activate
+
+      - name: Install dependencies
+        working-directory: typescript
+        run: pnpm install --registry https://registry.npmjs.org/
+
+      - name: Build library
+        working-directory: typescript
+        run: pnpm run build
+
+      - name: Run tests
+        working-directory: typescript/example
+        run: pnpm test
+
+      - name: Configure npmjs.org auth
+        working-directory: typescript
+        env:
+          DEPLOY_NPM_TOKEN: ${{ secrets.REPO_NPM_TOKEN }}
+        run: |
+          cat > .npmrc <<EOF
+          registry=https://registry.npmjs.org/
+          //registry.npmjs.org/:_authToken=${DEPLOY_NPM_TOKEN}
+          EOF
+
+      - name: Publish to npm
+        if: ${{ !inputs.dry_run }}
+        working-directory: typescript
+        run: pnpm publish --access public --no-git-checks
+
+      - name: Publish to npm (dry-run)
+        if: ${{ inputs.dry_run }}
+        working-directory: typescript
+        run: pnpm publish --access public --no-git-checks --dry-run
+
+      - name: Create and push tag
+        if: ${{ !inputs.dry_run }}
+        env:
+          TAG: ${{ needs.validate.outputs.tag }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "${TAG}" -m "TypeScript release ${{ needs.validate.outputs.version }}"
+          git push origin "${TAG}"
+
+      - name: Create GitHub Release
+        if: ${{ !inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.validate.outputs.tag }}
+          VERSION: ${{ needs.validate.outputs.version }}
+        run: |
+          gh release create "${TAG}" \
+            --title "TypeScript ${VERSION}" \
+            --notes-file typescript/RELEASE_NOTES_LATEST.md
