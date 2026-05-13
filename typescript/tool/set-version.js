@@ -5,8 +5,8 @@
 //
 // Used in two places:
 //   - The snapshot workflow stamps a `0.0.0-<sha>` version before publishing.
-//   - Humans run this locally when bumping VERSION for a release PR, to keep
-//     package.json in sync with VERSION.
+//   - Developers run this locally when bumping VERSION for a release PR, to
+//     keep package.json in sync with VERSION.
 //
 // The release workflow does NOT call this — the tagged commit must already
 // have VERSION and package.json aligned. tool/validate-version.js enforces it.
