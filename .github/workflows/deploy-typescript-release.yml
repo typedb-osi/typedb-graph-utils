@@ -113,10 +113,12 @@ jobs:
 
       - name: Configure npmjs.org auth
         working-directory: typescript
+        env:
+          DEPLOY_NPM_TOKEN: ${{ secrets.REPO_NPM_TOKEN }}
         run: |
           cat > .npmrc <<EOF
           registry=https://registry.npmjs.org/
-          //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}
+          //registry.npmjs.org/:_authToken=${DEPLOY_NPM_TOKEN}
           EOF
 
       - name: Publish to npm

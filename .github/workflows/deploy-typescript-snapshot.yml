@@ -61,10 +61,15 @@ jobs:
 
       - name: Configure Cloudsmith npm registry
         working-directory: typescript
+        env:
+          DEPLOY_NPM_USERNAME: ${{ secrets.REPO_TYPEDB_USERNAME }}
+          DEPLOY_NPM_PASSWORD: ${{ secrets.REPO_TYPEDB_PASSWORD }}
         run: |
+          AUTH=$(printf '%s:%s' "${DEPLOY_NPM_USERNAME}" "${DEPLOY_NPM_PASSWORD}" | base64 -w0)
           cat > .npmrc <<EOF
           registry=https://npm.cloudsmith.io/typedb/public-snapshot/
-          //npm.cloudsmith.io/typedb/public-snapshot/:_authToken=${{ secrets.CLOUDSMITH_TOKEN }}
+          //npm.cloudsmith.io/typedb/public-snapshot/:_auth=${AUTH}
+          //npm.cloudsmith.io/typedb/public-snapshot/:always-auth=true
           EOF
 
       - name: Publish snapshot
