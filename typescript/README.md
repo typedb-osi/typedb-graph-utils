@@ -35,14 +35,8 @@ graphBuilder.build(dataGraph);
 
 A complete working example using Sigma.js for browser visualisation is in [example/](example/).
 
-## Snapshots
-
-Snapshots are published to Cloudsmith on every push to `master`, versioned `0.0.0-<commit-sha>`. Install with:
-
-```shell
-npm install --registry https://npm.cloudsmith.io/typedb/public-snapshot/ @typedb/graph-utils@0.0.0-<commit-sha>
-```
-
 ## Releases
 
 Released versions of `@typedb/graph-utils` are published to [npmjs.org](https://www.npmjs.com/package/@typedb/graph-utils). Maintainers creating a release should follow the procedure in [`AGENTS.md`](../AGENTS.md#releasing-typescript).
+
+Snapshot builds are published to Cloudsmith.
