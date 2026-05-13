@@ -5,7 +5,7 @@
 //
 // CI invokes this immediately before `pnpm publish` (snapshot or release).
 // During normal development package.json may drift from VERSION; alignment
-// is enforced at release time by tool/verify-version.js.
+// is enforced at release time by tool/validate-version.js.
 
 const fs = require("node:fs");
 const path = require("node:path");

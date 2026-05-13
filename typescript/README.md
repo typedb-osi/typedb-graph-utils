@@ -37,7 +37,7 @@ A complete working example using Sigma.js for browser visualisation is in [examp
 
 ## Publishing a release
 
-The release pipeline is driven by the [`VERSION`](VERSION) file. `package.json` may drift from `VERSION` during development, but they must agree at release time; [`tool/verify-version.js`](tool/verify-version.js) runs first in the release workflow and fails the run if they don't.
+The release pipeline is driven by the [`VERSION`](VERSION) file. `package.json` may drift from `VERSION` during development, but they must agree at release time; [`tool/validate-version.js`](tool/validate-version.js) runs first in the release workflow and fails the run if they disagree (or if the release tag already exists, or the version is already on npm).
 
 ### Steps
 
@@ -47,9 +47,7 @@ The release pipeline is driven by the [`VERSION`](VERSION) file. `package.json` 
 3. Trigger the **Deploy TypeScript release** workflow on `master`.
 
 The workflow will:
-- run [`tool/verify-version.js`](tool/verify-version.js) to confirm `VERSION` and `package.json` agree
-- check that the tag `typescript-<VERSION>` doesn't already exist
-- check that `@typedb/graph-utils@<VERSION>` isn't already on npm
+- run [`tool/validate-version.js`](tool/validate-version.js) to confirm `VERSION` and `package.json` agree, the tag is available, and the version is not on npm
 - check that `RELEASE_NOTES_LATEST.md` is non-empty
 - build, test, then `pnpm publish` to npmjs.org
 - create and push the `typescript-<VERSION>` tag
