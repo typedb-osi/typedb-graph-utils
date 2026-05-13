@@ -71,9 +71,9 @@ If the workflow fails (e.g. transient npm outage), retry from the failed workflo
 
 ## Snapshots
 
-Every push to `master` under `typescript/**` publishes a snapshot to the Cloudsmith npm registry at `https://npm.cloudsmith.io/typedb/public-snapshot/`. The snapshot version is `<VERSION>-<sha7>`. The `Deploy TypeScript snapshot` workflow can also be triggered manually via `workflow_dispatch` (useful for verifying the pipeline from a feature branch).
+Every push to `master` under `typescript/**` publishes a snapshot to the Cloudsmith npm registry at `https://npm.cloudsmith.io/typedb/public-snapshot/`. The snapshot version is `<VERSION>-<full-commit-sha>`. The `Deploy TypeScript snapshot` workflow can also be triggered manually via `workflow_dispatch` (useful for verifying the pipeline from a feature branch).
 
 Consume a snapshot with:
 ```shell
-npm install --registry https://npm.cloudsmith.io/typedb/public-snapshot/ @typedb/graph-utils@<VERSION>-<sha7>
+npm install --registry https://npm.cloudsmith.io/typedb/public-snapshot/ @typedb/graph-utils@<VERSION>-<full-commit-sha>
 ```

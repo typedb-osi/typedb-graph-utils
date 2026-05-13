@@ -24,7 +24,7 @@ There is intentionally no root `VERSION` file.
 
 - `typescript/VERSION` is the source of truth for releases.
 - `typescript/package.json`'s `version` field is allowed to drift from `VERSION` during development. The release workflow runs [`tool/verify-version.js`](typescript/tool/verify-version.js) and refuses to publish if the two disagree.
-- Use [`tool/set-version.js`](typescript/tool/set-version.js) to update `package.json` — e.g. `node tool/set-version.js 3.7.0`. The snapshot workflow uses the same script to stamp a snapshot-specific version (`<VERSION>-<sha7>`).
+- Use [`tool/set-version.js`](typescript/tool/set-version.js) to update `package.json` — e.g. `node tool/set-version.js 3.7.0`. The snapshot workflow uses the same script to stamp a snapshot-specific version (`<VERSION>-<full-commit-sha>`).
 
 ## Releasing
 

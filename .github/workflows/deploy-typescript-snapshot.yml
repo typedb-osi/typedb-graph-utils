@@ -52,8 +52,7 @@ jobs:
         working-directory: typescript
         run: |
           BASE=$(cat VERSION)
-          SHA_SHORT=${GITHUB_SHA::7}
-          SNAPSHOT="${BASE}-${SHA_SHORT}"
+          SNAPSHOT="${BASE}-${GITHUB_SHA}"
           echo "snapshot=${SNAPSHOT}" >> "$GITHUB_OUTPUT"
           echo "Snapshot version: ${SNAPSHOT}"
 
