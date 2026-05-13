@@ -3,9 +3,13 @@
 //
 // Usage: node tool/set-version.js <version>
 //
-// CI invokes this immediately before `pnpm publish` (snapshot or release).
-// During normal development package.json may drift from VERSION; alignment
-// is enforced at release time by tool/validate-version.js.
+// Used in two places:
+//   - The snapshot workflow stamps a `0.0.0-<sha>` version before publishing.
+//   - Humans run this locally when bumping VERSION for a release PR, to keep
+//     package.json in sync with VERSION.
+//
+// The release workflow does NOT call this — the tagged commit must already
+// have VERSION and package.json aligned. tool/validate-version.js enforces it.
 
 const fs = require("node:fs");
 const path = require("node:path");
