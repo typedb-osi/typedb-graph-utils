@@ -1,60 +1,58 @@
 name: Deploy TypeScript release
 
 on:
-  workflow_dispatch:
-    inputs:
-      dry_run:
-        description: 'Dry run (skip npm publish, tag push, and GitHub Release)'
-        type: boolean
-        default: false
+  push:
+    tags:
+      - 'typescript-[0-9]+.[0-9]+.[0-9]+'
+      - 'typescript-[0-9]+.[0-9]+.[0-9]+-*'
 
 permissions:
   contents: write
 
 jobs:
   validate:
-    name: Validate release inputs
+    name: Validate release
     runs-on: ubuntu-24.04
     outputs:
-      version: ${{ steps.read-version.outputs.version }}
-      tag: ${{ steps.read-version.outputs.tag }}
+      version: ${{ steps.resolve.outputs.version }}
+      tag: ${{ steps.resolve.outputs.tag }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Verify VERSION matches package.json
-        working-directory: typescript
-        run: node tool/verify-version.js
-
-      - name: Read VERSION
-        id: read-version
+      - name: Resolve version and tag
+        id: resolve
         working-directory: typescript
         run: |
-          VERSION=$(cat VERSION | tr -d '[:space:]')
-          if [[ -z "${VERSION}" ]]; then
+          FILE_VERSION=$(cat VERSION | tr -d '[:space:]')
+          if [[ -z "${FILE_VERSION}" ]]; then
             echo "ERROR: typescript/VERSION is empty." >&2
             exit 1
           fi
-          if ! [[ "${VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
-            echo "ERROR: VERSION '${VERSION}' is not a valid semver." >&2
+          if ! [[ "${FILE_VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "ERROR: VERSION '${FILE_VERSION}' is not a valid semver." >&2
             exit 1
           fi
-          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
-          echo "tag=typescript-${VERSION}" >> "$GITHUB_OUTPUT"
+          EXPECTED_TAG="typescript-${FILE_VERSION}"
+          TAG="${GITHUB_REF_NAME}"
+          if [[ "${TAG}" != "${EXPECTED_TAG}" ]]; then
+            echo "ERROR: tag '${TAG}' does not match typescript/VERSION ('${FILE_VERSION}')." >&2
+            exit 1
+          fi
 
-      - name: Verify tag does not already exist
-        run: |
-          TAG="${{ steps.read-version.outputs.tag }}"
-          if git rev-parse "refs/tags/${TAG}" >/dev/null 2>&1; then
-            echo "ERROR: tag '${TAG}' already exists. Bump typescript/VERSION." >&2
-            exit 1
-          fi
-          echo "Tag '${TAG}' is available."
+          echo "version=${FILE_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Verify package.json matches VERSION
+        working-directory: typescript
+        run: node tool/verify-version.js
 
       - name: Verify version not already on npm
         run: |
-          VERSION="${{ steps.read-version.outputs.version }}"
+          VERSION="${{ steps.resolve.outputs.version }}"
           if npm view "@typedb/graph-utils@${VERSION}" version >/dev/null 2>&1; then
             echo "ERROR: @typedb/graph-utils@${VERSION} is already published to npm." >&2
             exit 1
@@ -79,6 +77,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.validate.outputs.tag }}
 
       - name: Setup TypeDB
         uses: typedb/setup-typedb@1.0.0
@@ -107,10 +107,6 @@ jobs:
         working-directory: typescript/example
         run: pnpm test
 
-      - name: Pin package.json to release version
-        working-directory: typescript
-        run: node tool/set-version.js "${{ needs.validate.outputs.version }}"
-
       - name: Configure npmjs.org auth
         working-directory: typescript
         env:
@@ -122,32 +118,19 @@ jobs:
           EOF
 
       - name: Publish to npm
-        if: ${{ !inputs.dry_run }}
         working-directory: typescript
         run: pnpm publish --access public --no-git-checks
 
-      - name: Publish to npm (dry-run)
-        if: ${{ inputs.dry_run }}
-        working-directory: typescript
-        run: pnpm publish --access public --no-git-checks --dry-run
-
-      - name: Create and push tag
-        if: ${{ !inputs.dry_run }}
-        env:
-          TAG: ${{ needs.validate.outputs.tag }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag -a "${TAG}" -m "TypeScript release ${{ needs.validate.outputs.version }}"
-          git push origin "${TAG}"
-
-      - name: Create GitHub Release
-        if: ${{ !inputs.dry_run }}
+      - name: Ensure GitHub Release exists
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ needs.validate.outputs.tag }}
           VERSION: ${{ needs.validate.outputs.version }}
         run: |
-          gh release create "${TAG}" \
-            --title "TypeScript ${VERSION}" \
-            --notes-file typescript/RELEASE_NOTES_LATEST.md
+          if gh release view "${TAG}" >/dev/null 2>&1; then
+            echo "GitHub Release '${TAG}' already exists; leaving as-is."
+          else
+            gh release create "${TAG}" \
+              --title "TypeScript ${VERSION}" \
+              --notes-file typescript/RELEASE_NOTES_LATEST.md
+          fi

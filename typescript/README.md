@@ -37,42 +37,37 @@ A complete working example using Sigma.js for browser visualisation is in [examp
 
 ## Publishing a release
 
-The release pipeline is driven by the [`VERSION`](VERSION) file. `package.json` may drift from `VERSION` during development, but they must agree at release time; [`tool/verify-version.js`](tool/verify-version.js) runs first in the release workflow and fails the run if they don't.
+Releases are triggered by pushing a tag of the form `typescript-<VERSION>` (no `v` prefix). The tagged commit must contain matching [`VERSION`](VERSION) and `package.json` versions; the workflow verifies this and refuses to publish otherwise. [`tool/verify-version.js`](tool/verify-version.js) enforces the check.
 
 ### Steps
 
-1. Open a PR that bumps both [`VERSION`](VERSION) and `package.json` to the new version, and updates [`RELEASE_NOTES_LATEST.md`](RELEASE_NOTES_LATEST.md).
-   - To keep them in sync, run `node tool/set-version.js <new-version>` after editing `VERSION`.
+1. Open a PR that bumps [`VERSION`](VERSION), `package.json`, and [`RELEASE_NOTES_LATEST.md`](RELEASE_NOTES_LATEST.md). Run `node tool/set-version.js <new-version>` to keep `VERSION` and `package.json` in sync.
 2. Merge the PR to `master`.
-3. Trigger the **Deploy TypeScript release** workflow on `master`.
+3. Create the release tag. This triggers the **Deploy TypeScript release** workflow, which validates the commit, publishes `@typedb/graph-utils@<VERSION>` to npmjs.org, and creates a GitHub Release if one does not already exist.
 
-The workflow will:
-- run [`tool/verify-version.js`](tool/verify-version.js) to confirm `VERSION` and `package.json` agree
-- check that the tag `typescript-<VERSION>` doesn't already exist
-- check that `@typedb/graph-utils@<VERSION>` isn't already on npm
-- check that `RELEASE_NOTES_LATEST.md` is non-empty
-- build, test, then `pnpm publish` to npmjs.org
-- create and push the `typescript-<VERSION>` tag
-- create a GitHub Release with `RELEASE_NOTES_LATEST.md` as the body
+### Creating the release tag
 
-### Triggering the workflow
+**GitHub UI** (recommended):
+Releases → **Draft a new release** → choose tag `typescript-<VERSION>` → target `master` → title `TypeScript <VERSION>` → paste [`RELEASE_NOTES_LATEST.md`](RELEASE_NOTES_LATEST.md) into the description (or click *Generate release notes* and edit) → **Publish release**. GitHub creates the tag and the GitHub Release in one step; the workflow then publishes to npm.
 
-**GitHub UI:** Actions → **Deploy TypeScript release** → **Run workflow** → pick branch `master` → click **Run workflow**. A `dry_run` checkbox is available; when checked, the workflow builds and runs `pnpm publish --dry-run` but skips the npm publish, tag push, and GitHub Release.
-
-**GitHub CLI** (`gh auth login` with the `workflow` scope):
+**GitHub CLI:**
 ```shell
-gh workflow run deploy-typescript-release.yml --ref master
-gh workflow run deploy-typescript-release.yml --ref master -f dry_run=true
+gh release create typescript-<VERSION> \
+  --target master \
+  --title "TypeScript <VERSION>" \
+  --notes-file typescript/RELEASE_NOTES_LATEST.md
 ```
 
-**REST API** (token needs `actions: write` and `contents: write`):
+**Plain git** (if you want to skip creating a GitHub Release in this step — the workflow will create one for you):
 ```shell
-curl -X POST \
-  -H "Accept: application/vnd.github+json" \
-  -H "Authorization: Bearer $GH_TOKEN" \
-  https://api.github.com/repos/typedb-osi/typedb-graph-utils/actions/workflows/deploy-typescript-release.yml/dispatches \
-  -d '{"ref":"master","inputs":{"dry_run":"false"}}'
+git checkout master && git pull
+git tag typescript-<VERSION>
+git push origin typescript-<VERSION>
 ```
+
+### Retrying a failed publish
+
+If the workflow fails (e.g. transient npm outage), retry from the failed workflow run's page via **Re-run failed jobs**. The run is scoped to the same tag and commit.
 
 ## Snapshots
 

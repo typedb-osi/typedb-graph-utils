@@ -28,11 +28,15 @@ There is intentionally no root `VERSION` file.
 
 ## Releasing
 
-Releases are triggered manually from the GitHub Actions **Run workflow** button (or via `gh`/REST). There is no tag-push or branch-push trigger. Tags are *created by* the workflow after a successful publish; do not create them manually.
+Releases are triggered by pushing a release tag. The tag is the canonical record of a release; the workflow only reacts to it. There is no branch-push trigger.
 
 Tag format: `typescript-3.7.0`, `python-3.7.0` — no `v` prefix; mirrors the convention used in typedb-driver, typedb, typedb-studio.
 
-The full procedure (including CLI and REST invocation) lives in the per-language README — see [`typescript/README.md`](typescript/README.md#publishing-a-release).
+The tagged commit must contain `VERSION` and `package.json` (or the language-equivalent manifest) at the version named by the tag. The release workflow refuses to publish if they disagree.
+
+If a release run fails transiently (e.g. an npm registry outage), retry it from the failed run's page via **Re-run failed jobs**, not by re-pushing the tag.
+
+The full procedure lives in the per-language README — see [`typescript/README.md`](typescript/README.md#publishing-a-release).
 
 ## CI secrets
 
@@ -40,4 +44,4 @@ The full procedure (including CLI and REST invocation) lives in the per-language
 |--------------------------|------------------------------------|--------------------------------------------------|
 | `REPO_TYPEDB_TOKEN`      | `deploy-typescript-snapshot.yml`   | Cloudsmith npm publish auth (snapshots)          |
 | `REPO_NPM_TOKEN`         | `deploy-typescript-release.yml`    | npmjs.org publish auth (releases)                |
-| `GITHUB_TOKEN`           | `deploy-typescript-release.yml`    | Auto-provided by GH Actions; pushes tag + Release|
+| `GITHUB_TOKEN`           | `deploy-typescript-release.yml`    | Auto-provided by GH Actions; creates GitHub Release |
