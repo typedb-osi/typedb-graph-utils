@@ -5,6 +5,9 @@ on:
     tags:
       - 'typescript-[0-9]+.[0-9]+.[0-9]+'
       - 'typescript-[0-9]+.[0-9]+.[0-9]+-*'
+    # TODO: temporary - testing this workflow on a PR branch before merge. Remove after merge.
+    branches:
+      - ts-gha
 
 permissions:
   contents: write
@@ -38,10 +41,12 @@ jobs:
           fi
           EXPECTED_TAG="typescript-${FILE_VERSION}"
           TAG="${GITHUB_REF_NAME}"
-          if [[ "${TAG}" != "${EXPECTED_TAG}" ]]; then
-            echo "ERROR: tag '${TAG}' does not match typescript/VERSION ('${FILE_VERSION}')." >&2
-            exit 1
-          fi
+          # TODO: re-enable tag-vs-VERSION check before merging. Disabled to allow PR branch-push testing.
+          # if [[ "${TAG}" != "${EXPECTED_TAG}" ]]; then
+          #   echo "ERROR: tag '${TAG}' does not match typescript/VERSION ('${FILE_VERSION}')." >&2
+          #   exit 1
+          # fi
+          TAG="${EXPECTED_TAG}"
 
           echo "version=${FILE_VERSION}" >> "$GITHUB_OUTPUT"
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
@@ -77,8 +82,10 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          ref: ${{ needs.validate.outputs.tag }}
+        # TODO: re-enable ref pinning to the release tag before merging.
+        # Disabled for PR branch-push testing where the tag doesn't yet exist.
+        # with:
+        #   ref: ${{ needs.validate.outputs.tag }}
 
       - name: Setup TypeDB
         uses: typedb/setup-typedb@1.0.0
@@ -117,20 +124,23 @@ jobs:
           //registry.npmjs.org/:_authToken=${DEPLOY_NPM_TOKEN}
           EOF
 
+      # TODO: revert --dry-run before merging. Temporary for PR validation.
       - name: Publish to npm
         working-directory: typescript
-        run: pnpm publish --access public --no-git-checks
+        run: pnpm publish --access public --no-git-checks --dry-run
 
-      - name: Ensure GitHub Release exists
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ needs.validate.outputs.tag }}
-          VERSION: ${{ needs.validate.outputs.version }}
-        run: |
-          if gh release view "${TAG}" >/dev/null 2>&1; then
-            echo "GitHub Release '${TAG}' already exists; leaving as-is."
-          else
-            gh release create "${TAG}" \
-              --title "TypeScript ${VERSION}" \
-              --notes-file typescript/RELEASE_NOTES_LATEST.md
-          fi
+      # TODO: re-enable Ensure GitHub Release exists before merging.
+      # Disabled during PR validation to avoid creating throwaway releases on the fork.
+      # - name: Ensure GitHub Release exists
+      #   env:
+      #     GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #     TAG: ${{ needs.validate.outputs.tag }}
+      #     VERSION: ${{ needs.validate.outputs.version }}
+      #   run: |
+      #     if gh release view "${TAG}" >/dev/null 2>&1; then
+      #       echo "GitHub Release '${TAG}' already exists; leaving as-is."
+      #     else
+      #       gh release create "${TAG}" \
+      #         --title "TypeScript ${VERSION}" \
+      #         --notes-file typescript/RELEASE_NOTES_LATEST.md
+      #     fi
