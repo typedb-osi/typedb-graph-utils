@@ -36,9 +36,8 @@ The full procedure (including CLI and REST invocation) lives in the per-language
 
 ## CI secrets
 
-| Secret                  | Used by                            | Purpose                                          |
-|-------------------------|------------------------------------|--------------------------------------------------|
-| `REPO_TYPEDB_USERNAME`  | `deploy-typescript-snapshot.yml`   | Cloudsmith basic-auth username (snapshots)       |
-| `REPO_TYPEDB_PASSWORD`  | `deploy-typescript-snapshot.yml`   | Cloudsmith basic-auth password (snapshots)       |
-| `REPO_NPM_TOKEN`        | `deploy-typescript-release.yml`    | npmjs.org publish auth (releases)                |
-| `GITHUB_TOKEN`          | `deploy-typescript-release.yml`    | Auto-provided by GH Actions; pushes tag + Release|
+| Secret                   | Used by                            | Purpose                                          |
+|--------------------------|------------------------------------|--------------------------------------------------|
+| `REPO_TYPEDB_TOKEN`      | `deploy-typescript-snapshot.yml`   | Cloudsmith npm publish auth (snapshots)          |
+| `REPO_NPM_TOKEN`         | `deploy-typescript-release.yml`    | npmjs.org publish auth (releases)                |
+| `GITHUB_TOKEN`           | `deploy-typescript-release.yml`    | Auto-provided by GH Actions; pushes tag + Release|
