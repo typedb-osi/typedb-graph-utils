@@ -3,13 +3,13 @@
 //
 // Usage: node tool/set-version.js <version>
 //
-// Used in two places:
-//   - The snapshot workflow stamps a `0.0.0-<sha>` version before publishing.
-//   - Developers run this locally when bumping VERSION for a release PR, to
-//     keep package.json in sync with VERSION.
+// Developers run this locally when bumping VERSION for a release PR, to keep
+// package.json in sync. The release workflow does NOT call this — the tagged
+// commit must already have VERSION and package.json aligned, and
+// tool/validate-version.js enforces that.
 //
-// The release workflow does NOT call this — the tagged commit must already
-// have VERSION and package.json aligned. tool/validate-version.js enforces it.
+// The snapshot workflow also calls this to stamp a `0.0.0-<sha>` version
+// before publishing to Cloudsmith.
 
 const fs = require("node:fs");
 const path = require("node:path");
