@@ -1,13 +1,12 @@
 name: Deploy TypeScript release
 
 on:
-  push:
-    tags:
-      - 'typescript-[0-9]+.[0-9]+.[0-9]+'
-      - 'typescript-[0-9]+.[0-9]+.[0-9]+-*'
-    # TODO: temporary - testing this workflow on a PR branch before merge. Remove after merge.
-    branches:
-      - ts-gha
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (skip npm publish, tag push, and GitHub Release)'
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -30,30 +29,30 @@ jobs:
         id: resolve
         working-directory: typescript
         run: |
-          FILE_VERSION=$(cat VERSION | tr -d '[:space:]')
-          if [[ -z "${FILE_VERSION}" ]]; then
+          VERSION=$(cat VERSION | tr -d '[:space:]')
+          if [[ -z "${VERSION}" ]]; then
             echo "ERROR: typescript/VERSION is empty." >&2
             exit 1
           fi
-          if ! [[ "${FILE_VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
-            echo "ERROR: VERSION '${FILE_VERSION}' is not a valid semver." >&2
+          if ! [[ "${VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "ERROR: VERSION '${VERSION}' is not a valid semver." >&2
             exit 1
           fi
-          EXPECTED_TAG="typescript-${FILE_VERSION}"
-          TAG="${GITHUB_REF_NAME}"
-          # TODO: re-enable tag-vs-VERSION check before merging. Disabled to allow PR branch-push testing.
-          # if [[ "${TAG}" != "${EXPECTED_TAG}" ]]; then
-          #   echo "ERROR: tag '${TAG}' does not match typescript/VERSION ('${FILE_VERSION}')." >&2
-          #   exit 1
-          # fi
-          TAG="${EXPECTED_TAG}"
-
-          echo "version=${FILE_VERSION}" >> "$GITHUB_OUTPUT"
-          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "tag=typescript-${VERSION}" >> "$GITHUB_OUTPUT"
 
       - name: Verify package.json matches VERSION
         working-directory: typescript
         run: node tool/verify-version.js
+
+      - name: Verify tag does not already exist
+        run: |
+          TAG="${{ steps.resolve.outputs.tag }}"
+          if git rev-parse "refs/tags/${TAG}" >/dev/null 2>&1; then
+            echo "ERROR: tag '${TAG}' already exists. Bump typescript/VERSION." >&2
+            exit 1
+          fi
+          echo "Tag '${TAG}' is available."
 
       - name: Verify version not already on npm
         run: |
@@ -82,10 +81,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        # TODO: re-enable ref pinning to the release tag before merging.
-        # Disabled for PR branch-push testing where the tag doesn't yet exist.
-        # with:
-        #   ref: ${{ needs.validate.outputs.tag }}
 
       - name: Setup TypeDB
         uses: typedb/setup-typedb@1.0.0
@@ -124,23 +119,33 @@ jobs:
           //registry.npmjs.org/:_authToken=${DEPLOY_NPM_TOKEN}
           EOF
 
-      # TODO: revert --dry-run before merging. Temporary for PR validation.
       - name: Publish to npm
+        if: ${{ !inputs.dry_run }}
+        working-directory: typescript
+        run: pnpm publish --access public --no-git-checks
+
+      - name: Publish to npm (dry-run)
+        if: ${{ inputs.dry_run }}
         working-directory: typescript
         run: pnpm publish --access public --no-git-checks --dry-run
 
-      # TODO: re-enable Ensure GitHub Release exists before merging.
-      # Disabled during PR validation to avoid creating throwaway releases on the fork.
-      # - name: Ensure GitHub Release exists
-      #   env:
-      #     GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #     TAG: ${{ needs.validate.outputs.tag }}
-      #     VERSION: ${{ needs.validate.outputs.version }}
-      #   run: |
-      #     if gh release view "${TAG}" >/dev/null 2>&1; then
-      #       echo "GitHub Release '${TAG}' already exists; leaving as-is."
-      #     else
-      #       gh release create "${TAG}" \
-      #         --title "TypeScript ${VERSION}" \
-      #         --notes-file typescript/RELEASE_NOTES_LATEST.md
-      #     fi
+      - name: Create and push tag
+        if: ${{ !inputs.dry_run }}
+        env:
+          TAG: ${{ needs.validate.outputs.tag }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "${TAG}" -m "TypeScript release ${{ needs.validate.outputs.version }}"
+          git push origin "${TAG}"
+
+      - name: Create GitHub Release
+        if: ${{ !inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.validate.outputs.tag }}
+          VERSION: ${{ needs.validate.outputs.version }}
+        run: |
+          gh release create "${TAG}" \
+            --title "TypeScript ${VERSION}" \
+            --notes-file typescript/RELEASE_NOTES_LATEST.md
